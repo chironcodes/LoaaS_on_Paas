@@ -1,7 +1,7 @@
-from google.cloud import datastore
 import time
 import uuid
 import os
+from google.cloud import datastore
 
 # Only required if you're outside GCP environment
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './key.json'
@@ -16,31 +16,33 @@ class interface_datastore:
 
 
 
-    def insertEntity(self, from_who, to_you):
+    def insertEntity(self, from_who, to_you, pictures):
         try:
-            unique_id = uuid.uuid4()
-            key = self.client.key('Page', str(unique_id))
-            entity = datastore.Entity(key=key)
+            unique_key = uuid.uuid4()
+            key = self.client.key('Page', str(unique_key))
+            entity = datastore.Entity(key=key, exclude_from_indexes=['pictures'])
             entity.update({
             'from_who': from_who,
             'to_you': to_you,
             'when': time.time(),
-            'pics': 'abla',
+            'pictures': pictures,
             })
             self.client.put(entity)
-
-            if self.getEntity(key):
-                return unique_id
-            else:
-                return False
+            return unique_key
+        
         except Exception as e:
             print(str(e))
             return False
 
 
-    def getEntity(self, key: str):
+    def getEntity(self, from_who:str, to_you:str, key: str):
         try:
-            return self.client.get(key)
+            key = self.client.key('Page', str(key))
+            content = self.client.get(key)
+            if content['from_who']==from_who and content['to_you']==to_you:
+                return self.client.get(key)
+            else:
+                return False
         except Exception as e:
             print(str(e))
             return False    
